@@ -44,8 +44,26 @@ class ProgressBarPage {
     this.elementos.botaoReset().click();
   }
 
-  validarValor(valor) {
-    this.elementos.barra().should('have.attr', 'aria-valuenow', String(valor));
+  /**
+   * Confirma que o Reset foi aplicado: o botão volta a ser "Start" e a barra sai dos 100%.
+   * Não valida o valor exato porque, por um bug do demoqa, se o Reset é clicado logo
+   * que a barra chega a 100%, ela volta a subir sozinha (ver cenário @bug e o README).
+   */
+  validarReiniciada() {
+    this.elementos.botaoReset().should('not.exist');
+    this.elementos.botaoStartStop().should('have.text', 'Start');
+    this.elementos.barra().invoke('attr', 'aria-valuenow').should('not.eq', '100');
+  }
+
+  /**
+   * Verifica que a barra continua no valor esperado depois de um tempo parada.
+   * A espera fixa é intencional: o que se valida é a permanência do valor.
+   */
+  validarValorApos(valor, segundos) {
+    cy.wait(segundos * 1000);
+    this.elementos.barra().invoke('attr', 'aria-valuenow').then((atual) => {
+      expect(atual, `valor da barra após ${segundos}s parada`).to.eq(String(valor));
+    });
   }
 }
 

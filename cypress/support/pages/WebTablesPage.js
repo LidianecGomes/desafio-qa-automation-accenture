@@ -5,6 +5,18 @@
  * não depende da paginação (a tabela mostra só 10 linhas por página).
  */
 const LINHA = '.rt-tbody .rt-tr-group, table tbody tr';
+const CABECALHO = '.rt-thead .rt-th, table thead th';
+const CELULA = '.rt-td, td';
+
+// Campo do registro -> título da coluna na tabela.
+const COLUNAS = {
+  nome: 'First Name',
+  sobrenome: 'Last Name',
+  idade: 'Age',
+  email: 'Email',
+  salario: 'Salary',
+  departamento: 'Department',
+};
 
 class WebTablesPage {
   elementos = {
@@ -49,14 +61,21 @@ class WebTablesPage {
     this.elementos.busca().clear();
   }
 
+  /**
+   * Valida cada valor na sua própria coluna (localizada pelo título), para que,
+   * por exemplo, a idade "20" não seja encontrada dentro do salário "20500".
+   */
   validarRegistro(registro) {
     this.buscar(registro.email);
-    this.elementos.linhaComTexto(registro.email).within(() => {
-      cy.contains(registro.nome);
-      cy.contains(registro.sobrenome);
-      cy.contains(registro.idade);
-      cy.contains(registro.salario);
-      cy.contains(registro.departamento);
+    cy.get(CABECALHO).then(($titulos) => {
+      const titulos = [...$titulos].map((el) => el.innerText.trim());
+      this.elementos.linhaComTexto(registro.email).find(CELULA).should(($celulas) => {
+        Object.entries(COLUNAS).forEach(([campo, titulo]) => {
+          const indice = titulos.indexOf(titulo);
+          expect(indice, `coluna "${titulo}" na tabela`).to.be.gte(0);
+          expect($celulas.eq(indice).text().trim(), titulo).to.eq(registro[campo]);
+        });
+      });
     });
     this.limparBusca();
   }

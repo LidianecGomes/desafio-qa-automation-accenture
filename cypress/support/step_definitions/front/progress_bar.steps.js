@@ -22,10 +22,21 @@ When('a barra chega a {int}%', (valor) => {
   ProgressBarPage.aguardarChegarEm(valor);
 });
 
-Then('eu reseto a barra de progresso', () => {
+When('eu reseto a barra de progresso', () => {
   ProgressBarPage.resetar();
 });
 
-Then('o valor da barra deve ser {int}%', (valor) => {
-  ProgressBarPage.validarValor(valor);
+// Espera e clique no mesmo passo, sem a pausa entre passos do Cucumber:
+// é o clique imediato que reproduz o bug do Reset (ver cenário @bug e README).
+When('eu reseto a barra assim que ela chega a {int}%', (valor) => {
+  ProgressBarPage.aguardarChegarEm(valor);
+  ProgressBarPage.resetar();
+});
+
+Then('a barra deve ser reiniciada', () => {
+  ProgressBarPage.validarReiniciada();
+});
+
+Then('a barra deve permanecer em {int}% após {int} segundos', (valor, segundos) => {
+  ProgressBarPage.validarValorApos(valor, segundos);
 });

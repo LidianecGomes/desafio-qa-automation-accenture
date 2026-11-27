@@ -1,6 +1,15 @@
-import 'cypress-real-events';
 import './commands';
 
-// Os scripts de anúncio do demoqa lançam erros de JavaScript que não têm
-// relação com o que estamos testando. Sem isso, o Cypress falharia o teste.
-Cypress.on('uncaught:exception', () => false);
+// Exceções do site que não têm relação com o que está sendo testado.
+// Qualquer outra exceção derruba o teste, para não esconder defeitos reais.
+const EXCECOES_IGNORADAS = [
+  // Bug conhecido do Practice Form (popup não fecha). Ver README, bug 2.
+  /findDOMNode is not a function/,
+];
+
+Cypress.on('uncaught:exception', (erro) => {
+  if (EXCECOES_IGNORADAS.some((padrao) => padrao.test(erro.message))) {
+    return false;
+  }
+  return true;
+});

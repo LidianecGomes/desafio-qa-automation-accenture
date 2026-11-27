@@ -9,18 +9,17 @@ Automação de testes de **API** e **Frontend** do site [demoqa.com](https://dem
 | [Cypress](https://www.cypress.io/) | Execução dos testes de API (`cy.request`) e de interface |
 | [@badeball/cypress-cucumber-preprocessor](https://github.com/badeball/cypress-cucumber-preprocessor) | Cucumber/BDD: cenários em Gherkin (português) |
 | [@faker-js/faker](https://fakerjs.dev/) | Massa de dados aleatória |
-| [cypress-real-events](https://github.com/dmtrKovalenko/cypress-real-events) | Eventos reais de mouse para o drag and drop |
 
 ## Pré-requisitos
 
-- [Node.js](https://nodejs.org/) 20 ou superior
+- [Node.js](https://nodejs.org/) 22 ou superior (exigido pelo Cypress 16)
 - Google Chrome (opcional; o Cypress também roda no Electron, que já vem embutido)
 
 ## Instalação
 
 ```bash
-git clone <url-do-repositorio>
-cd desafio-qa-accenture
+git clone https://github.com/LidianecGomes/desafio-qa-automation-accenture.git
+cd desafio-qa-automation-accenture
 npm install
 ```
 
@@ -97,7 +96,7 @@ Ao final, o usuário criado é excluído (`DELETE /Account/v1/User/{userID}`) pa
 | Practice Form | `practice_form.feature` | Dados aleatórios, upload de `.txt`, validação de todos os dados no popup |
 | Browser Windows | `browser_windows.feature` | Validação da abertura da nova janela e da mensagem |
 | Web Tables | `web_tables.feature` | Criar, editar e deletar; **bônus:** 12 registros dinâmicos via parâmetro do Cucumber |
-| Progress Bar | `progress_bar.feature` | Parar antes de 25%, validar, ir até 100% e resetar |
+| Progress Bar | `progress_bar.feature` | Parar antes de 25%, validar, ir até 100% e resetar (botão volta a "Start") |
 | Sortable | `sortable.feature` | Drag and drop para ordem crescente |
 
 ## Bugs encontrados
@@ -128,6 +127,22 @@ Ao final, o usuário criado é excluído (`DELETE /Account/v1/User/{userID}`) pa
 
 **Como a automação trata:** o cenário principal de `practice_form.feature` valida os dados no popup e clica em Close, mas não verifica se ele sumiu. O cenário `@bug` reproduz o defeito, verificando que o popup deixa de ser exibido, e falha enquanto ele existir (`npm run test:bugs`).
 
+### 3. Progress Bar: Reset logo após chegar a 100% faz a barra voltar a subir sozinha
+
+**Passos para reproduzir:**
+1. Acessar https://demoqa.com/progress-bar
+2. Clicar em **Start** e aguardar a barra chegar a 100%
+3. Clicar em **Reset** imediatamente e observar a barra por alguns segundos
+
+**Resultado esperado:** a barra volta a 0% e permanece parada, com o botão **Start** disponível.
+**Resultado obtido:** a barra volta a 0% e recomeça a subir (cerca de 1% a cada 100 ms), embora o botão exiba **Start**. Quando o Reset é clicado cerca de 500 ms depois de chegar a 100%, a barra fica em 0%, o que indica que o timer do site continua ativo por um instante depois dos 100%.
+
+**Evidência na automação:** com o clique imediato, a barra estava entre 20% e 24% dois segundos após o Reset, em todas as tentativas (`expected '21' to equal '0'`). Com o clique 500 ms depois, ficou em 0% em todas. Antes de o bug ser identificado, o cenário principal passava ou falhava conforme o tempo entre a barra chegar a 100% e o clique em Reset.
+
+**Como a automação trata:** o cenário principal de `progress_bar.feature` confirma que o Reset foi aplicado (o botão volta a "Start" e a barra sai dos 100%), sem depender do valor exato. O cenário `@bug` clica em Reset assim que a barra chega a 100%, verifica que ela permanece em 0% e falha enquanto o bug existir (`npm run test:bugs`).
+
+> Se o demoqa corrigir algum desses bugs, o cenário `@bug` correspondente passa a ser aprovado. Nesse caso, basta remover a tag `@bug` para que ele volte ao `npm test`.
+
 ## Decisões técnicas
 
 - **Nova janela (Browser Windows):** o Cypress executa em uma única aba e não controla novas janelas. Seguindo a [recomendação oficial](https://docs.cypress.io/app/guides/cross-origin-testing), o teste intercepta o `window.open` com `cy.stub` para comprovar que a nova janela foi solicitada para `/sample`, abre essa URL na mesma aba para validar a mensagem e "fecha" a janela voltando à página anterior.
@@ -135,3 +150,5 @@ Ao final, o usuário criado é excluído (`DELETE /Account/v1/User/{userID}`) pa
 - **Progress Bar:** o teste aguarda a barra passar da metade do limite (12%) antes de clicar em Stop, garantindo margem de tempo para parar antes de 25%.
 - **Web Tables:** os registros são localizados pela caixa de busca, então o teste não depende da paginação da tabela (10 linhas por página), o que é essencial no bônus com 12 registros.
 - **Anúncios do demoqa:** domínios de anúncio são bloqueados em `cypress.config.js` e banners fixos são removidos, evitando lentidão e cliques interceptados.
+- **Exceções do site:** `cypress/support/e2e.js` ignora apenas exceções conhecidas e documentadas (hoje, o `findDOMNode` do bug 2). Qualquer outra exceção do site faz o teste falhar, para não esconder defeitos.
+- **Web Tables (validação):** cada valor do registro é conferido na sua própria coluna, localizada pelo título, evitando falsos positivos (por exemplo, a idade "20" dentro do salário "20500").

@@ -19,12 +19,14 @@
     "automation"
   ],
   "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
   "devDependencies": {
     "@badeball/cypress-cucumber-preprocessor": "^28.0.1",
     "@bahmutov/cypress-esbuild-preprocessor": "^2.2.8",
     "@faker-js/faker": "^10.6.0",
     "cypress": "^16.4.0",
-    "cypress-real-events": "^1.15.1",
     "esbuild": "^0.25.0"
   },
   "cypress-cucumber-preprocessor": {

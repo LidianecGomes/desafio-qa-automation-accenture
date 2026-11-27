@@ -32,8 +32,12 @@ class SortablePage {
     });
   }
 
+  // A asserção fica dentro do .should para o Cypress reconsultar a lista até
+  // ela estabilizar (um .should depois de .then não refaz a consulta ao DOM).
   validarOrdem(ordemEsperada) {
-    this.obterOrdemAtual().should('deep.equal', ordemEsperada);
+    cy.get(ITENS).should(($itens) => {
+      expect([...$itens].map((el) => el.innerText.trim())).to.deep.equal(ordemEsperada);
+    });
   }
 }
 
