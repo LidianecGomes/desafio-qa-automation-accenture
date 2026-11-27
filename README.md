@@ -25,19 +25,109 @@ npm install
 
 ## Execução
 
+### Executar tudo de uma vez
+
 | Comando | O que executa |
 |---|---|
-| `npm test` | Todos os cenários (API + Front) em uma única execução, exceto os de bugs conhecidos (`@bug`) |
-| `npm run test:api` | Somente a Parte 1 – API |
-| `npm run test:front` | Somente a Parte 2 – Frontend |
-| `npm run test:bonus` | Somente o bônus (12 registros dinâmicos no Web Tables) |
-| `npm run test:bugs` | Somente os cenários que reproduzem bugs encontrados no demoqa (falham enquanto o bug existir) |
-| `npm run test:chrome` | Todos os cenários no Google Chrome |
-| `npm run cy:open` | Abre a interface do Cypress para executar e acompanhar visualmente |
+| `npm test` | Todos os cenários (API + Front) em segundo plano (headless), mostrando a tabela de resultados no final. **Forma recomendada para avaliar a entrega.** |
+| `npx cypress run --headed --browser chrome` | Todos os cenários em sequência, abrindo o Chrome para acompanhar visualmente cada teste |
 
-Também é possível filtrar por qualquer tag: `npx cypress run --expose tags="@forms or @sortable"`.
+Nas duas opções, os cenários com a tag `@bug` ficam de fora automaticamente (configurado em `cypress.config.js`, em `expose.tags`).
+
+### Executar por parte
+
+| Comando | Equivale a | O que executa |
+|---|---|---|
+| `npm run test:api` | `cypress run --expose tags=@api` | Somente a Parte 1 – API |
+| `npm run test:front` | `cypress run --expose tags="@front and not @bug"` | Somente a Parte 2 – Frontend, sem os cenários `@bug` |
+| `npm run test:bonus` | `cypress run --expose tags=@bonus` | Somente o bônus (12 registros dinâmicos no Web Tables) |
+| `npm run test:bugs` | `cypress run --expose tags=@bug` | Somente os cenários que reproduzem bugs encontrados no demoqa (falham enquanto o bug existir) |
+| `npm run test:chrome` | `cypress run --browser chrome` | Todos os cenários no Google Chrome, em segundo plano (headless), sem os cenários `@bug` |
+
+### Executar um arquivo específico
+
+```bash
+npx cypress run --spec cypress/e2e/front/web_tables.feature
+```
+
+Os cenários `@bug` do arquivo também ficam de fora.
+
+### Modo interativo
+
+```bash
+npm run cy:open
+```
+
+Abre a interface do Cypress. Nela, cada arquivo `.feature` é executado individualmente: clique em **E2E Testing**, escolha o navegador e clique no arquivo desejado. Para rodar todos de uma vez, use uma das opções de [Executar tudo de uma vez](#executar-tudo-de-uma-vez).
+
+### Filtrar por tag
+
+```bash
+npx cypress run --expose tags="(@forms or @sortable) and not @bug"
+```
+
+Use `--expose`, e não `--env`: no Cypress 16 o cucumber-preprocessor ignora as tags passadas por `--env`. Uma tag informada na linha de comando **substitui** o padrão do `cypress.config.js`; por isso, inclua `and not @bug` para deixar de fora os cenários de bugs conhecidos.
+
+| Tag | Onde está |
+|---|---|
+| `@api` | `bookstore.feature` (Parte 1 – API) |
+| `@front` | Todos os arquivos da Parte 2 – Frontend |
+| `@forms` | `practice_form.feature` |
+| `@windows` | `browser_windows.feature` |
+| `@webtables` | `web_tables.feature` |
+| `@progressbar` | `progress_bar.feature` |
+| `@sortable` | `sortable.feature` |
+| `@bonus` | Cenário bônus de 12 registros em `web_tables.feature` |
+| `@bug` | Cenários que reproduzem bugs do demoqa em `practice_form.feature`, `web_tables.feature` e `progress_bar.feature` |
 
 Ao final da execução é gerado um relatório HTML do Cucumber em `reports/cucumber-report.html`.
+
+## Evidências de execução
+
+Execução completa realizada em **27/11/2026**, no commit `8178197`.
+
+| Ambiente | Versão |
+|---|---|
+| Sistema operacional | Windows 11 Home Single Language (10.0.26300) |
+| Cypress | 16.4.0 |
+| Navegador | Electron 150 (headless, padrão do `cypress run`) |
+| Node.js | 20.18.0 |
+
+### `npm test`: todos os cenários (exceto `@bug`)
+
+```
+       Spec                                              Tests  Passing  Failing  Pending  Skipped
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ √  api/bookstore.feature                    00:06        1        1        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ √  front/browser_windows.feature            00:07        1        1        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ √  front/practice_form.feature              00:07        1        1        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ √  front/progress_bar.feature               00:14        1        1        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ √  front/sortable.feature                   00:12        1        1        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ √  front/web_tables.feature                 00:42        2        2        -        -        - │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+    √  All specs passed!                        01:31        7        7        -        -        -
+```
+
+Relatório completo do Cucumber: [`docs/evidencias/relatorio-npm-test.html`](docs/evidencias/relatorio-npm-test.html).
+
+### `npm run test:bugs`: cenários que reproduzem bugs do demoqa
+
+Os 3 cenários falham, como esperado, enquanto os bugs existirem no site:
+
+| Cenário | Motivo da falha | Evidência |
+|---|---|---|
+| Web Tables: excluir um registro deve remover apenas ele | O segundo registro criado foi apagado junto com o primeiro | [bug1-web-tables.png](docs/evidencias/screenshots-bugs/bug1-web-tables.png) |
+| Practice Form: o popup deve fechar ao clicar em Close | `TypeError: findDOMNode is not a function`; o popup continua aberto | [bug2-practice-form.png](docs/evidencias/screenshots-bugs/bug2-practice-form.png) |
+| Progress Bar: a barra deve permanecer em 0% após o reset | 2 segundos após o Reset, a barra estava em 24% (`expected '24' to equal '0'`) | [bug3-progress-bar.png](docs/evidencias/screenshots-bugs/bug3-progress-bar.png) |
+
+Relatório completo do Cucumber: [`docs/evidencias/relatorio-test-bugs.html`](docs/evidencias/relatorio-test-bugs.html).
+
+> Os relatórios HTML não são exibidos diretamente pelo GitHub: após clonar o repositório, abra os arquivos no navegador.
 
 ## Estrutura do projeto
 
@@ -70,6 +160,11 @@ cypress/
     ├── utils/dados.js            # Geração de dados aleatórios
     ├── commands.js               # Comandos customizados do Cypress
     └── e2e.js                    # Configuração global
+docs/
+└── evidencias/                   # Evidências de execução (ver seção acima)
+    ├── relatorio-npm-test.html   # Relatório do Cucumber da execução completa
+    ├── relatorio-test-bugs.html  # Relatório dos cenários @bug
+    └── screenshots-bugs/         # Um screenshot por bug encontrado
 cypress.config.js
 ```
 
