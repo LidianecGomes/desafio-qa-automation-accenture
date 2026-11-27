@@ -41,16 +41,24 @@ class PracticeFormPage {
     this.elementos.celular().type(aluno.celular);
     this.selecionarData(aluno.nascimento);
 
+    // Não usamos {enter}: se a lista de sugestões ainda não abriu, o Enter
+    // submete o formulário antes da hora. Por isso clicamos na opção sugerida.
     aluno.materias.forEach((materia) => {
-      this.elementos.materias().type(`${materia}{enter}`, { force: true });
+      this.elementos.materias().type(materia, { force: true });
+      cy.contains('[class*="subjects-auto-complete__option"]', materia).click();
     });
 
     aluno.hobbies.forEach((hobby) => this.elementos.hobby(hobby).click());
 
     this.elementos.upload().selectFile(`cypress/fixtures/${aluno.arquivo}`);
     this.elementos.endereco().type(aluno.endereco);
-    this.elementos.estado().type(`${aluno.estado}{enter}`, { force: true });
-    this.elementos.cidade().type(`${aluno.cidade}{enter}`, { force: true });
+    this.selecionarOpcao('#state', aluno.estado);
+    this.selecionarOpcao('#city', aluno.cidade);
+  }
+
+  selecionarOpcao(campo, valor) {
+    cy.get(`${campo} input`).type(valor, { force: true });
+    cy.contains(`${campo} [class*="-option"]`, valor).click({ force: true });
   }
 
   submeter() {

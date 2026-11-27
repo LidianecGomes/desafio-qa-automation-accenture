@@ -61,17 +61,39 @@ class WebTablesPage {
     this.limparBusca();
   }
 
+  /**
+   * Seleciona a maior opção de "linhas por página" para todos os registros
+   * ficarem visíveis sem precisar da busca nem trocar de página.
+   */
+  mostrarTodasAsLinhas() {
+    cy.get('body').then(($body) => {
+      const $select = $body
+        .find('select')
+        .filter((_, el) => [...el.options].some((op) => /\d+/.test(op.text)));
+      if (!$select.length) {
+        cy.log('Seletor de linhas por página não encontrado');
+        return;
+      }
+      const maiorOpcao = [...$select[0].options].reduce((maior, op) =>
+        (parseInt(op.text, 10) > parseInt(maior.text, 10) ? op : maior));
+      cy.wrap($select.first()).select(maiorOpcao.value);
+    });
+  }
+
+  // Editar e excluir são feitos SEM a busca ativa: no demoqa, excluir um registro
+  // com a busca filtrada apaga também os registros que não aparecem no filtro.
   editarRegistro(emailAtual, novosDados) {
-    this.buscar(emailAtual);
+    this.limparBusca();
+    this.mostrarTodasAsLinhas();
     this.elementos.linhaComTexto(emailAtual).find('[title="Edit"]').click();
     this.preencherCampos(novosDados);
-    this.limparBusca();
   }
 
   excluirRegistro(email) {
-    this.buscar(email);
-    this.elementos.linhaComTexto(email).find('[title="Delete"]').click();
     this.limparBusca();
+    this.mostrarTodasAsLinhas();
+    this.elementos.linhaComTexto(email).find('[title="Delete"]').click();
+    cy.contains(LINHA, email).should('not.exist');
   }
 
   validarRegistroInexistente(email) {
