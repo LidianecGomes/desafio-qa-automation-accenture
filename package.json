@@ -1,0 +1,34 @@
+{
+  "name": "desafio-qa-automation-accenture",
+  "version": "1.0.0",
+  "description": "Desafio QA Automation Accenture - API (Book Store) e Frontend (demoqa.com) com Cypress + Cucumber (BDD)",
+  "scripts": {
+    "cy:open": "cypress open",
+    "test": "cypress run",
+    "test:api": "cypress run --env tags=@api",
+    "test:front": "cypress run --env tags=@front",
+    "test:bonus": "cypress run --env tags=@bonus",
+    "test:chrome": "cypress run --browser chrome"
+  },
+  "keywords": ["cypress", "cucumber", "bdd", "qa", "automation"],
+  "license": "MIT",
+  "devDependencies": {
+    "@badeball/cypress-cucumber-preprocessor": "^28.0.1",
+    "@bahmutov/cypress-esbuild-preprocessor": "^2.2.8",
+    "@faker-js/faker": "^10.6.0",
+    "cypress": "^16.4.0",
+    "cypress-real-events": "^1.15.1",
+    "esbuild": "^0.25.0"
+  },
+  "cypress-cucumber-preprocessor": {
+    "stepDefinitions": [
+      "cypress/support/step_definitions/**/*.js"
+    ],
+    "html": {
+      "enabled": true,
+      "output": "reports/cucumber-report.html"
+    },
+    "filterSpecs": true,
+    "omitFiltered": true
+  }
+}
