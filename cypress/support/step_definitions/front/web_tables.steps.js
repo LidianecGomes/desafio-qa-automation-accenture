@@ -56,9 +56,19 @@ Then('os {int} registros devem ser exibidos na tabela', (quantidade) => {
 });
 
 When('eu deleto todos os registros criados', () => {
-  registros.forEach((novo) => WebTablesPage.excluirRegistro(novo.email));
+  registros.forEach((novo) => WebTablesPage.excluirSeExistir(novo.email));
 });
 
 Then('nenhum dos registros criados deve ser exibido na tabela', () => {
   registros.forEach((novo) => WebTablesPage.validarRegistroInexistente(novo.email));
+});
+
+// ---------- Bug conhecido: excluir um registro apaga outros ----------
+
+When('eu deleto o primeiro registro criado', () => {
+  WebTablesPage.excluirSeExistir(registros[0].email);
+});
+
+Then('os demais registros criados devem continuar na tabela', () => {
+  registros.slice(1).forEach((novo) => WebTablesPage.validarRegistroExistente(novo.email));
 });

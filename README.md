@@ -28,14 +28,15 @@ npm install
 
 | Comando | O que executa |
 |---|---|
-| `npm test` | Todos os cenários (API + Front) em uma única execução |
+| `npm test` | Todos os cenários (API + Front) em uma única execução, exceto os de bugs conhecidos (`@bug`) |
 | `npm run test:api` | Somente a Parte 1 – API |
 | `npm run test:front` | Somente a Parte 2 – Frontend |
 | `npm run test:bonus` | Somente o bônus (12 registros dinâmicos no Web Tables) |
+| `npm run test:bugs` | Somente os cenários que reproduzem bugs encontrados no demoqa (falham enquanto o bug existir) |
 | `npm run test:chrome` | Todos os cenários no Google Chrome |
 | `npm run cy:open` | Abre a interface do Cypress para executar e acompanhar visualmente |
 
-Também é possível filtrar por qualquer tag: `npx cypress run --env tags="@forms or @sortable"`.
+Também é possível filtrar por qualquer tag: `npx cypress run --expose tags="@forms or @sortable"`.
 
 Ao final da execução é gerado um relatório HTML do Cucumber em `reports/cucumber-report.html`.
 
@@ -98,6 +99,34 @@ Ao final, o usuário criado é excluído (`DELETE /Account/v1/User/{userID}`) pa
 | Web Tables | `web_tables.feature` | Criar, editar e deletar; **bônus:** 12 registros dinâmicos via parâmetro do Cucumber |
 | Progress Bar | `progress_bar.feature` | Parar antes de 25%, validar, ir até 100% e resetar |
 | Sortable | `sortable.feature` | Drag and drop para ordem crescente |
+
+## Bugs encontrados
+
+### 1. Web Tables: excluir um registro apaga todos os registros criados
+
+**Passos para reproduzir:**
+1. Acessar https://demoqa.com/webtables
+2. Adicionar dois novos registros pelo botão **Add**
+3. Excluir apenas o primeiro registro criado (ícone da lixeira)
+
+**Resultado esperado:** somente o registro excluído sai da tabela.
+**Resultado obtido:** todos os registros criados são removidos; restam apenas os 3 registros originais.
+
+**Evidência na automação:** com 15 registros na tabela (3 originais + 12 criados), a exclusão de um único registro deixou 3 linhas (`expected 3 to equal 14`).
+
+**Como a automação trata:** o cenário bônus exclui cada registro que ainda estiver na tabela e registra no log quando ele já havia sido removido. O cenário `@bug` em `web_tables.feature` reproduz o defeito e falha enquanto ele existir (`npm run test:bugs`).
+
+### 2. Practice Form: o popup de confirmação não fecha ao clicar em Close
+
+**Passos para reproduzir:**
+1. Acessar https://demoqa.com/automation-practice-form
+2. Preencher os campos obrigatórios e clicar em **Submit**
+3. No popup "Thanks for submitting the form", clicar em **Close**
+
+**Resultado esperado:** o popup é fechado e o formulário volta a ser exibido.
+**Resultado obtido:** o popup continua aberto e o site lança no console o erro `TypeError: findDOMNode is not a function`.
+
+**Como a automação trata:** o cenário principal de `practice_form.feature` valida os dados no popup e clica em Close, mas não verifica se ele sumiu. O cenário `@bug` reproduz o defeito, verificando que o popup deixa de ser exibido, e falha enquanto ele existir (`npm run test:bugs`).
 
 ## Decisões técnicas
 

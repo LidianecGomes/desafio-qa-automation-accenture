@@ -4,6 +4,13 @@ const { addCucumberPreprocessorPlugin } = require('@badeball/cypress-cucumber-pr
 const { createEsbuildPlugin } = require('@badeball/cypress-cucumber-preprocessor/esbuild');
 
 module.exports = defineConfig({
+  // Por padrão, não roda os cenários que reproduzem bugs conhecidos (@bug).
+  // "npm run test:bugs" sobrescreve com --expose tags=@bug.
+  // A partir do Cypress 15.17, o cucumber-preprocessor lê as tags de "expose"
+  // (e não mais de "env"); com "env" o filtro é ignorado.
+  expose: {
+    tags: 'not @bug',
+  },
   e2e: {
     baseUrl: 'https://demoqa.com',
     specPattern: 'cypress/e2e/**/*.feature',

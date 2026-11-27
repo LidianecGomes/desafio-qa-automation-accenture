@@ -74,8 +74,10 @@ class WebTablesPage {
         cy.log('Seletor de linhas por página não encontrado');
         return;
       }
+      // As opções vêm como "Show 10", "Show 20"...: extrai só o número.
+      const numero = (op) => parseInt(op.text.replace(/\D/g, ''), 10) || 0;
       const maiorOpcao = [...$select[0].options].reduce((maior, op) =>
-        (parseInt(op.text, 10) > parseInt(maior.text, 10) ? op : maior));
+        (numero(op) > numero(maior) ? op : maior));
       cy.wrap($select.first()).select(maiorOpcao.value);
     });
   }
@@ -89,11 +91,46 @@ class WebTablesPage {
     this.preencherCampos(novosDados);
   }
 
+  // Conta só as linhas preenchidas (as vazias de preenchimento não têm "@").
+  contarRegistros() {
+    return cy.get('body').then(($body) => $body.find(LINHA).filter(':contains("@")').length);
+  }
+
   excluirRegistro(email) {
     this.limparBusca();
     this.mostrarTodasAsLinhas();
-    this.elementos.linhaComTexto(email).find('[title="Delete"]').click();
-    cy.contains(LINHA, email).should('not.exist');
+    this.contarRegistros().then((antes) => {
+      cy.log(`Registros antes de excluir ${email}: ${antes}`);
+      this.elementos.linhaComTexto(email).find('[title="Delete"]').click();
+      cy.contains(LINHA, email).should('not.exist');
+      // Excluir um registro deve remover exatamente uma linha da tabela.
+      this.contarRegistros().should('eq', antes - 1);
+    });
+  }
+
+  /**
+   * Exclui o registro se ele ainda estiver na tabela. Por causa do bug do demoqa
+   * (excluir um registro novo apaga todos os outros registros novos), alguns já
+   * podem ter sumido junto com o anterior.
+   */
+  excluirSeExistir(email) {
+    this.limparBusca();
+    this.mostrarTodasAsLinhas();
+    cy.get('body').then(($body) => {
+      const existe = $body.find(LINHA).filter(`:contains("${email}")`).length > 0;
+      if (existe) {
+        this.elementos.linhaComTexto(email).find('[title="Delete"]').click();
+        cy.contains(LINHA, email).should('not.exist');
+      } else {
+        cy.log(`${email} já tinha sido removido junto com outro registro (bug do demoqa)`);
+      }
+    });
+  }
+
+  validarRegistroExistente(email) {
+    this.buscar(email);
+    this.elementos.linhaComTexto(email).should('exist');
+    this.limparBusca();
   }
 
   validarRegistroInexistente(email) {

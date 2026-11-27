@@ -24,3 +24,12 @@ Funcionalidade: Web Tables
     Então os 12 registros devem ser exibidos na tabela
     Quando eu deleto todos os registros criados
     Então nenhum dos registros criados deve ser exibido na tabela
+
+  # Bug encontrado no demoqa: ao excluir um registro criado, todos os outros
+  # registros criados também são apagados. Este cenário falha enquanto o bug existir.
+  # Não roda no "npm test"; execute com "npm run test:bugs".
+  @bug
+  Cenário: Excluir um registro deve remover apenas ele
+    Quando eu crio 2 novos registros
+    E eu deleto o primeiro registro criado
+    Então os demais registros criados devem continuar na tabela

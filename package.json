@@ -5,12 +5,19 @@
   "scripts": {
     "cy:open": "cypress open",
     "test": "cypress run",
-    "test:api": "cypress run --env tags=@api",
-    "test:front": "cypress run --env tags=@front",
-    "test:bonus": "cypress run --env tags=@bonus",
+    "test:api": "cypress run --expose tags=@api",
+    "test:front": "cypress run --expose tags=\"@front and not @bug\"",
+    "test:bonus": "cypress run --expose tags=@bonus",
+    "test:bugs": "cypress run --expose tags=@bug",
     "test:chrome": "cypress run --browser chrome"
   },
-  "keywords": ["cypress", "cucumber", "bdd", "qa", "automation"],
+  "keywords": [
+    "cypress",
+    "cucumber",
+    "bdd",
+    "qa",
+    "automation"
+  ],
   "license": "MIT",
   "devDependencies": {
     "@badeball/cypress-cucumber-preprocessor": "^28.0.1",
